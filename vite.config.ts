@@ -4,9 +4,4 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
-	server: {
-		proxy: {
-			'/script.js': 'https://cloud.umami.is/script.js'
-		}
-	}
 });
