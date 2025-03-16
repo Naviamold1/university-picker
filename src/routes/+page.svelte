@@ -1,61 +1,90 @@
 <script lang="ts">
 	import { faculties } from '$lib/faculties';
 	import { reorder, useSortable } from '$lib/components/sortableJS.svelte';
-	import {
-		Column,
-		createRender,
-		createTable,
-		Render,
-		Subscribe
-	} from '@humanspeak/svelte-headless-table';
+	import { createRender, createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
 	import {
 		addColumnFilters,
 		addPagination,
 		addResizedColumns,
 		addSelectedRows,
-		addSortBy,
-		addTableFilter
+		addSortBy
 	} from '@humanspeak/svelte-headless-table/plugins';
-	import { ArrowUpDown } from 'lucide-svelte';
-	import TableCheckbox from '$lib/components/ui/table-checkbox.svelte';
-	import { readable, writable } from 'svelte/store';
+	import { ArrowUpDown, Grip } from 'lucide-svelte';
+	import { writable } from 'svelte/store';
 	import type { Details } from '$lib/faculties';
-	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
+	import TextFilter from '$lib/components/ui/textFilter.svelte';
+	import { textFussyFilter } from '$lib/fussyFilter';
 
 	const data = writable<Details[]>(faculties);
 
 	const table = createTable(data, {
-		sort: addSortBy({}),
+		sort: addSortBy(),
 		page: addPagination({ initialPageSize: 100 }),
-		filter: addTableFilter({}),
-		select: addSelectedRows({}),
-		resize: addResizedColumns({})
+		filter: addColumnFilters(),
+		select: addSelectedRows(),
+		resize: addResizedColumns()
 	});
 
 	const columns = table.createColumns([
 		table.display({
 			id: 'selected',
 			header: '',
-			cell: ({ row }, { pluginStates }) => {
-				const { isSomeSubRowsSelected, isSelected } = pluginStates.select.getRowState(row);
-				return createRender(TableCheckbox, {
-					isSelected,
-					isSomeSubRowsSelected
-				});
-			}
+			cell: () => createRender(Grip as any)
 		}),
 		table.column({
 			header: 'კოდი',
-			accessor: 'code'
+			accessor: 'code',
+			plugins: {
+				filter: {
+					fn: textFussyFilter,
+					initialFilterValue: '',
+					render: ({ filterValue, values, preFilteredValues }) =>
+						createRender(TextFilter, {
+							filterValue,
+							values,
+							preFilteredValues,
+							tag: 'კოდის',
+							tabIndex: 1
+						})
+				}
+			}
 		}),
 		table.column({
 			header: 'უნივერსიტეტი',
-			accessor: 'university'
+			accessor: 'university',
+			plugins: {
+				filter: {
+					fn: textFussyFilter,
+					initialFilterValue: '',
+					render: ({ filterValue, values, preFilteredValues }) =>
+						createRender(TextFilter, {
+							filterValue,
+							values,
+							preFilteredValues,
+							tag: 'უნივერსიტეტის',
+							tabIndex: 2
+						})
+				}
+			}
 		}),
 		table.column({
 			header: 'ფაკულტეტი',
-			accessor: 'faculty'
+			accessor: 'faculty',
+			plugins: {
+				filter: {
+					fn: textFussyFilter,
+					initialFilterValue: '',
+					render: ({ filterValue, values, preFilteredValues }) =>
+						createRender(TextFilter, {
+							filterValue,
+							values,
+							preFilteredValues,
+							tag: 'ფაკულტეტის',
+							tabIndex: 3
+						})
+				}
+			}
 		}),
 		table.column({
 			header: 'ფასი',
@@ -64,14 +93,17 @@
 		table.column({
 			header: 'ფინანსდება',
 			accessor: 'financed'
+		}),
+		table.display({
+			id: 'selected-end',
+			header: '',
+			cell: () => createRender(Grip as any)
 		})
 	]);
 
 	const { headerRows, rows, tableAttrs, tableBodyAttrs, pageRows, pluginStates } =
 		table.createViewModel(columns);
 
-	const { filterValue } = pluginStates.filter;
-	const { columnWidths } = pluginStates.resize;
 	const { selectedDataIds } = pluginStates.select;
 	const { hasNextPage, hasPreviousPage, pageIndex } = pluginStates.page;
 
@@ -83,6 +115,7 @@
 		animation: 200,
 		group: 'shared',
 		ghostClass: 'opacity-0',
+		handle: '.drag-handle',
 		onEnd(evt: any) {
 			$data = reorder($data, evt);
 		}
@@ -92,6 +125,7 @@
 		animation: 200,
 		group: 'shared',
 		ghostClass: 'opacity-0',
+		handle: '.drag-handle',
 		onEnd(evt: any) {
 			myList = reorder(myList, evt);
 		}
@@ -99,14 +133,12 @@
 </script>
 
 <div class="flex">
-	<div class="flex-1 border-1" bind:this={sortable2}></div>
+	<div class="flex-1 border-1" bind:this={sortable2}>
+		{#each Object.keys($selectedDataIds) as item}
+			<div>{item}</div>
+		{/each}
+	</div>
 	<div class="flex size-[59%] flex-col p-4">
-		<input
-			class="input mb-4 w-full rounded border p-2"
-			type="text"
-			bind:value={$filterValue}
-			placeholder="ფაკულტეტის ძიება..."
-		/>
 		<table
 			class="max-w-full border-collapse overflow-x-auto overflow-y-hidden rounded-lg shadow-md"
 			{...$tableAttrs}
@@ -120,8 +152,15 @@
 									<th {...attrs} use:props.resize class="p-2">
 										<button class="flex items-center" type="button" onclick={props.sort.toggle}>
 											<Render of={cell.render()} />
+											<!-- {#if cell.id !== 'selected' || cell.id === 'selected-end'} -->
 											<ArrowUpDown size={16} class="ml-2" />
+											<!-- {/if} -->
 										</button>
+										{#if props.filter?.render}
+											<div>
+												<Render of={props.filter.render} />
+											</div>
+										{/if}
 									</th>
 								</Subscribe>
 							{/each}
@@ -135,7 +174,7 @@
 						<tr
 							in:fade={{ duration: 150 }}
 							out:fade={{ duration: 150 }}
-							class="z-40 cursor-move rounded-lg p-3 shadow-sm ring-1 ring-gray-200
+							class="z-40 rounded-lg p-3 shadow-sm ring-1 ring-gray-200
 							transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-200"
 							{...rowAttrs}
 							data-row={row.id}
@@ -144,10 +183,14 @@
 							{#each row.cells as cell (cell.id)}
 								<Subscribe attrs={cell.attrs()} let:attrs>
 									<!-- {#if cell.id === 'selected'}{/if} -->
-									<td class="border-1 p-2 text-left" {...attrs}>
-										<div>
+									<td class="relative border-1 p-2 text-left" {...attrs}>
+										{#if cell.id === 'selected' || cell.id === 'selected-end'}
+											<div class="drag-handle absolute inset-2 flex cursor-move items-center">
+												<Render of={cell.render()} />
+											</div>
+										{:else}
 											<Render of={cell.render()} />
-										</div>
+										{/if}
 									</td>
 								</Subscribe>
 							{/each}
