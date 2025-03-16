@@ -7,7 +7,8 @@
 		addPagination,
 		addResizedColumns,
 		addSelectedRows,
-		addSortBy
+		addSortBy,
+		textPrefixFilter
 	} from '@humanspeak/svelte-headless-table/plugins';
 	import { ArrowUpDown, Grip } from 'lucide-svelte';
 	import { writable } from 'svelte/store';
@@ -37,7 +38,7 @@
 			accessor: 'code',
 			plugins: {
 				filter: {
-					fn: textFussyFilter,
+					fn: textPrefixFilter,
 					initialFilterValue: '',
 					render: ({ filterValue, values, preFilteredValues }) =>
 						createRender(TextFilter, {
@@ -150,7 +151,7 @@
 							{#each headerRow.cells as cell (cell.id)}
 								<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
 									<th {...attrs} use:props.resize class="p-2">
-										<button class="flex items-center" type="button" onclick={props.sort.toggle}>
+										<button class="flex items-center" data-umami-event={`sort-${cell.id} button`} type="button" onclick={props.sort.toggle}>
 											<Render of={cell.render()} />
 											<!-- {#if cell.id !== 'selected' || cell.id === 'selected-end'} -->
 											<ArrowUpDown size={16} class="ml-2" />

@@ -11,6 +11,8 @@
 </script>
 
 <input
+	data-umami-event={`filter-${tag}`}
+	data-umami-event-value={$filterValue}
 	class="input w-full rounded border p-2"
 	type="text"
 	bind:value={$filterValue}
