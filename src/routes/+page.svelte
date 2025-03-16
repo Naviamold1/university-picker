@@ -1,6 +1,13 @@
-<script>
+<script lang="ts">
 	import { faculties } from '$lib/faculties';
-	import { createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
+	import { reorder, useSortable } from '$lib/components/sortableJS.svelte';
+	import {
+		Column,
+		createRender,
+		createTable,
+		Render,
+		Subscribe
+	} from '@humanspeak/svelte-headless-table';
 	import {
 		addColumnFilters,
 		addPagination,
@@ -10,9 +17,15 @@
 		addTableFilter
 	} from '@humanspeak/svelte-headless-table/plugins';
 	import { ArrowUpDown } from 'lucide-svelte';
-	import { readable } from 'svelte/store';
+	import TableCheckbox from '$lib/components/ui/table-checkbox.svelte';
+	import { readable, writable } from 'svelte/store';
+	import type { Details } from '$lib/faculties';
+	import { flip } from 'svelte/animate';
+	import { fade } from 'svelte/transition';
 
-	const table = createTable(readable(faculties), {
+	const data = writable<Details[]>(faculties);
+
+	const table = createTable(data, {
 		sort: addSortBy({}),
 		page: addPagination({ initialPageSize: 100 }),
 		filter: addTableFilter({}),
@@ -21,6 +34,17 @@
 	});
 
 	const columns = table.createColumns([
+		table.display({
+			id: 'selected',
+			header: '',
+			cell: ({ row }, { pluginStates }) => {
+				const { isSomeSubRowsSelected, isSelected } = pluginStates.select.getRowState(row);
+				return createRender(TableCheckbox, {
+					isSelected,
+					isSomeSubRowsSelected
+				});
+			}
+		}),
 		table.column({
 			header: 'კოდი',
 			accessor: 'code'
@@ -47,79 +71,106 @@
 		table.createViewModel(columns);
 
 	const { filterValue } = pluginStates.filter;
+	const { columnWidths } = pluginStates.resize;
 	const { selectedDataIds } = pluginStates.select;
 	const { hasNextPage, hasPreviousPage, pageIndex } = pluginStates.page;
+
+	let sortable = $state<HTMLElement | null>(null);
+	let sortable2 = $state<HTMLElement | null>(null);
+	let myList = $state([]);
+
+	useSortable(() => sortable, {
+		animation: 200,
+		group: 'shared',
+		ghostClass: 'opacity-0',
+		onEnd(evt: any) {
+			$data = reorder($data, evt);
+		}
+	});
+
+	useSortable(() => sortable2, {
+		animation: 200,
+		group: 'shared',
+		ghostClass: 'opacity-0',
+		onEnd(evt: any) {
+			myList = reorder(myList, evt);
+		}
+	});
 </script>
 
-<div class="p-4">
-	<input
-		class="input mb-4 w-full rounded border p-2"
-		type="text"
-		bind:value={$filterValue}
-		placeholder="Search rows..."
-	/>
-	<table class="min-w-full border-collapse overflow-hidden rounded-lg shadow-md" {...$tableAttrs}>
-		<thead>
-			{#each $headerRows as headerRow (headerRow.id)}
-				<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
-					<tr {...rowAttrs}>
-						{#each headerRow.cells as cell (cell.id)}
-							<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
-								<td class="p-2 text-left">
-									<button class="flex items-center" onclick={props.sort.toggle}>
-										<Render of={cell.render()} />
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke-width="1.5"
-											stroke="currentColor"
-											class="ml-2 h-4 w-4"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m9-13.5L16.5 3m0 0L21 7.5M16.5 3v13.5"
-											/>
-										</svg>
-									</button>
-								</td>
-							</Subscribe>
-						{/each}
-					</tr>
-				</Subscribe>
-			{/each}
-		</thead>
-		<tbody {...$tableBodyAttrs}>
-			{#each $pageRows as row (row.id)}
-				<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-					<tr class="border-b" {...rowAttrs}>
-						{#each row.cells as cell (cell.id)}
-							<Subscribe attrs={cell.attrs()} let:attrs>
-								<td class="p-2 text-left" {...attrs}>
-									<Render of={cell.render()} />
-								</td>
-							</Subscribe>
-						{/each}
-					</tr>
-				</Subscribe>
-			{/each}
-		</tbody>
-	</table>
-	<div class="flex items-center justify-end space-x-4 py-4">
-		<button
-			class="rounded border px-4 py-2 disabled:opacity-50"
-			onclick={() => ($pageIndex = $pageIndex - 1)}
-			disabled={!$hasPreviousPage}
+<div class="flex">
+	<div class="flex-1 border-1" bind:this={sortable2}></div>
+	<div class="flex size-[59%] flex-col p-4">
+		<input
+			class="input mb-4 w-full rounded border p-2"
+			type="text"
+			bind:value={$filterValue}
+			placeholder="ფაკულტეტის ძიება..."
+		/>
+		<table
+			class="max-w-full border-collapse overflow-x-auto overflow-y-hidden rounded-lg shadow-md"
+			{...$tableAttrs}
 		>
-			Previous
-		</button>
-		<button
-			class="rounded border px-4 py-2 disabled:opacity-50"
-			disabled={!$hasNextPage}
-			onclick={() => ($pageIndex = $pageIndex + 1)}
-		>
-			Next
-		</button>
+			<thead>
+				{#each $headerRows as headerRow (headerRow.id)}
+					<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
+						<tr {...rowAttrs}>
+							{#each headerRow.cells as cell (cell.id)}
+								<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
+									<th {...attrs} use:props.resize class="p-2">
+										<button class="flex items-center" type="button" onclick={props.sort.toggle}>
+											<Render of={cell.render()} />
+											<ArrowUpDown size={16} class="ml-2" />
+										</button>
+									</th>
+								</Subscribe>
+							{/each}
+						</tr>
+					</Subscribe>
+				{/each}
+			</thead>
+			<tbody {...$tableBodyAttrs} bind:this={sortable}>
+				{#each $pageRows as row (row.id)}
+					<Subscribe rowAttrs={row.attrs()} let:rowAttrs rowProps={row.props()} let:rowProps>
+						<tr
+							in:fade={{ duration: 150 }}
+							out:fade={{ duration: 150 }}
+							class="z-40 cursor-move rounded-lg p-3 shadow-sm ring-1 ring-gray-200
+							transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-200"
+							{...rowAttrs}
+							data-row={row.id}
+							class:selected={rowProps.select.selected}
+						>
+							{#each row.cells as cell (cell.id)}
+								<Subscribe attrs={cell.attrs()} let:attrs>
+									<!-- {#if cell.id === 'selected'}{/if} -->
+									<td class="border-1 p-2 text-left" {...attrs}>
+										<div>
+											<Render of={cell.render()} />
+										</div>
+									</td>
+								</Subscribe>
+							{/each}
+						</tr>
+					</Subscribe>
+				{/each}
+			</tbody>
+		</table>
+		<div class="flex items-center justify-end space-x-4 py-4">
+			<button
+				class="rounded border px-4 py-2 disabled:opacity-50"
+				onclick={() => ($pageIndex = $pageIndex - 1)}
+				disabled={!$hasPreviousPage}
+			>
+				წინა
+			</button>
+			<button
+				class="rounded border px-4 py-2 disabled:opacity-50"
+				disabled={!$hasNextPage}
+				onclick={() => ($pageIndex = $pageIndex + 1)}
+			>
+				შემდეგი
+			</button>
+		</div>
 	</div>
 </div>
