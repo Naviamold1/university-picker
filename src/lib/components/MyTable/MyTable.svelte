@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { faculties } from '$lib/faculties';
-	import { reorder, useSortable } from '$lib/components/sortableJS.svelte';
 	import { createRender, createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
 	import {
 		addColumnFilters,
@@ -25,7 +24,13 @@
 		sort: addSortBy(),
 		page: addPagination({ initialPageSize: 100 }),
 		filter: addColumnFilters(),
-		select: addSelectedRows(),
+		select: addSelectedRows({
+			initialSelectedDataIds: $selectedUnis.reduce((obj, key) => {
+				//@ts-ignore
+				obj[key] = true;
+				return obj;
+			}, {})
+		}),
 		resize: addResizedColumns()
 	});
 
@@ -121,18 +126,6 @@
 	});
 
 	const { hasNextPage, hasPreviousPage, pageIndex } = pluginStates.page;
-
-	let sortable = $state<HTMLElement | null>(null);
-
-	useSortable(() => sortable, {
-		animation: 200,
-		group: 'shared',
-		ghostClass: 'opacity-0',
-		handle: '.drag-handle',
-		onEnd(evt: any) {
-			$data = reorder($data, evt);
-		}
-	});
 </script>
 
 <div class="z-[100] flex size-[59%] flex-col p-4">
@@ -170,7 +163,7 @@
 				</Subscribe>
 			{/each}
 		</thead>
-		<tbody {...$tableBodyAttrs} bind:this={sortable}>
+		<tbody {...$tableBodyAttrs}>
 			{#each $pageRows as row (row.id)}
 				<Subscribe rowAttrs={row.attrs()} let:rowAttrs rowProps={row.props()} let:rowProps>
 					<tr
@@ -186,13 +179,7 @@
 							<Subscribe attrs={cell.attrs()} let:attrs>
 								<!-- {#if cell.id === 'selected'}{/if} -->
 								<td class="relative border-1 p-2 text-left" {...attrs}>
-									{#if cell.id === 'selected' || cell.id === 'selected-end'}
-										<div class="drag-handle absolute inset-2 flex cursor-move items-center">
-											<Render of={cell.render()} />
-										</div>
-									{:else}
-										<Render of={cell.render()} />
-									{/if}
+									<Render of={cell.render()} />
 								</td>
 							</Subscribe>
 						{/each}

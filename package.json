@@ -35,6 +35,7 @@
 		"sortablejs": "^1.15.6",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
+		"svelte-copy": "^2.0.0",
 		"tailwindcss": "^4.0.0",
 		"typescript": "^5.0.0",
 		"typescript-eslint": "^8.20.0",
