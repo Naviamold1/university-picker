@@ -20,8 +20,6 @@
 			$savedList = reorder($savedList, evt);
 		}
 	});
-
-	let shareURL = `${page.url}view?key=${$savedList.join(',')}`;
 </script>
 
 <div class="flex items-center justify-center py-16">
@@ -120,18 +118,18 @@
 </Dialog.Root>
 
 <div class="w-full max-w-[19rem]">
-    <label for="clipboard" class='label font-bold pl-1 py-1'>Share</label>
-	<div class="relative" id='clipboard'>
+	<label for="clipboard" class="label py-1 pl-1 font-bold">Share</label>
+	<div class="relative" id="clipboard">
 		<input
 			type="text"
 			class="col-span-6 inline-block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-500 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-			value={shareURL}
+			value={`${page.url}view?key=${$savedList.join(',')}`}
 			disabled
 			readonly
 		/>
 		<button
 			aria-label="copy-link"
-			use:copy={shareURL}
+			use:copy={`${page.url}view?key=${$savedList.join(',')}`}
 			class="absolute end-2 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
 		>
 			<span id="default-icon">
