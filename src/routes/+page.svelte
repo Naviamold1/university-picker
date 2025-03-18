@@ -1,220 +1,116 @@
 <script lang="ts">
-	import { faculties } from '$lib/faculties';
+	import { selectedUnis } from '$lib/components/MyTable';
+	import MyTable from '$lib/components/MyTable/MyTable.svelte';
+	import { Dialog } from 'bits-ui';
+	import { Grip, Plus, Trash, X } from 'lucide-svelte';
 	import { reorder, useSortable } from '$lib/components/sortableJS.svelte';
-	import { createRender, createTable, Render, Subscribe } from '@humanspeak/svelte-headless-table';
-	import {
-		addColumnFilters,
-		addPagination,
-		addResizedColumns,
-		addSelectedRows,
-		addSortBy,
-		textPrefixFilter
-	} from '@humanspeak/svelte-headless-table/plugins';
-	import { ArrowUpDown, Grip } from 'lucide-svelte';
-	import { writable } from 'svelte/store';
-	import type { Details } from '$lib/faculties';
-	import { fade } from 'svelte/transition';
-	import TextFilter from '$lib/components/ui/textFilter.svelte';
-	import { textFussyFilter } from '$lib/fussyFilter';
-
-	const data = writable<Details[]>(faculties);
-
-	const table = createTable(data, {
-		sort: addSortBy(),
-		page: addPagination({ initialPageSize: 100 }),
-		filter: addColumnFilters(),
-		select: addSelectedRows(),
-		resize: addResizedColumns()
-	});
-
-	const columns = table.createColumns([
-		table.display({
-			id: 'selected',
-			header: '',
-			cell: () => createRender(Grip as any)
-		}),
-		table.column({
-			header: 'კოდი',
-			accessor: 'code',
-			plugins: {
-				filter: {
-					fn: textPrefixFilter,
-					initialFilterValue: '',
-					render: ({ filterValue, values, preFilteredValues }) =>
-						createRender(TextFilter, {
-							filterValue,
-							values,
-							preFilteredValues,
-							tag: 'კოდის',
-							tabIndex: 1
-						})
-				}
-			}
-		}),
-		table.column({
-			header: 'უნივერსიტეტი',
-			accessor: 'university',
-			plugins: {
-				filter: {
-					fn: textFussyFilter,
-					initialFilterValue: '',
-					render: ({ filterValue, values, preFilteredValues }) =>
-						createRender(TextFilter, {
-							filterValue,
-							values,
-							preFilteredValues,
-							tag: 'უნივერსიტეტის',
-							tabIndex: 2
-						})
-				}
-			}
-		}),
-		table.column({
-			header: 'ფაკულტეტი',
-			accessor: 'faculty',
-			plugins: {
-				filter: {
-					fn: textFussyFilter,
-					initialFilterValue: '',
-					render: ({ filterValue, values, preFilteredValues }) =>
-						createRender(TextFilter, {
-							filterValue,
-							values,
-							preFilteredValues,
-							tag: 'ფაკულტეტის',
-							tabIndex: 3
-						})
-				}
-			}
-		}),
-		table.column({
-			header: 'ფასი',
-			accessor: 'cost'
-		}),
-		table.column({
-			header: 'ფინანსდება',
-			accessor: 'financed'
-		}),
-		table.display({
-			id: 'selected-end',
-			header: '',
-			cell: () => createRender(Grip as any)
-		})
-	]);
-
-	const { headerRows, rows, tableAttrs, tableBodyAttrs, pageRows, pluginStates } =
-		table.createViewModel(columns);
-
-	const { selectedDataIds } = pluginStates.select;
-	const { hasNextPage, hasPreviousPage, pageIndex } = pluginStates.page;
+	import { faculties } from '$lib/faculties';
 
 	let sortable = $state<HTMLElement | null>(null);
-	let sortable2 = $state<HTMLElement | null>(null);
-	let myList = $state([]);
+
+	let savedList = selectedUnis;
 
 	useSortable(() => sortable, {
 		animation: 200,
-		group: 'shared',
+		handle: '.my-handle',
 		ghostClass: 'opacity-0',
-		handle: '.drag-handle',
-		onEnd(evt: any) {
-			$data = reorder($data, evt);
-		}
-	});
-
-	useSortable(() => sortable2, {
-		animation: 200,
-		group: 'shared',
-		ghostClass: 'opacity-0',
-		handle: '.drag-handle',
-		onEnd(evt: any) {
-			myList = reorder(myList, evt);
+		onEnd(evt) {
+			$savedList = reorder($savedList, evt);
 		}
 	});
 </script>
 
-<div class="flex">
-	<div class="flex-1 border-1" bind:this={sortable2}>
-		{#each Object.keys($selectedDataIds) as item}
-			<div>{item}</div>
-		{/each}
-	</div>
-	<div class="flex size-[59%] flex-col p-4">
-		<table
-			class="max-w-full border-collapse overflow-x-auto overflow-y-hidden rounded-lg shadow-md"
-			{...$tableAttrs}
-		>
-			<thead>
-				{#each $headerRows as headerRow (headerRow.id)}
-					<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
-						<tr {...rowAttrs}>
-							{#each headerRow.cells as cell (cell.id)}
-								<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
-									<th {...attrs} use:props.resize class="p-2">
-										<button class="flex items-center" data-umami-event={`sort-${cell.id} button`} type="button" onclick={props.sort.toggle}>
-											<Render of={cell.render()} />
-											<!-- {#if cell.id !== 'selected' || cell.id === 'selected-end'} -->
-											<ArrowUpDown size={16} class="ml-2" />
-											<!-- {/if} -->
-										</button>
-										{#if props.filter?.render}
-											<div>
-												<Render of={props.filter.render} />
-											</div>
-										{/if}
-									</th>
-								</Subscribe>
-							{/each}
-						</tr>
-					</Subscribe>
-				{/each}
-			</thead>
-			<tbody {...$tableBodyAttrs} bind:this={sortable}>
-				{#each $pageRows as row (row.id)}
-					<Subscribe rowAttrs={row.attrs()} let:rowAttrs rowProps={row.props()} let:rowProps>
-						<tr
-							in:fade={{ duration: 150 }}
-							out:fade={{ duration: 150 }}
-							class="z-40 rounded-lg p-3 shadow-sm ring-1 ring-gray-200
-							transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-200"
-							{...rowAttrs}
-							data-row={row.id}
-							class:selected={rowProps.select.selected}
+<div class="flex items-center justify-center py-16">
+	<table class="min-w-full divide-y">
+		<thead class="">
+			<tr>
+				<th class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"></th>
+				<th class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">კოდი</th>
+				<th class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
+					>უნივერსიტეტი</th
+				>
+				<th class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">ფაკულტეტი</th>
+				<th class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">ფასი</th>
+				<th class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase">ფინანსდება</th>
+				<th class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"></th>
+				<th class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"></th>
+			</tr>
+		</thead>
+		<tbody class="divide-y" bind:this={sortable}>
+			{#each $savedList as item}
+				<tr class="">
+					<td class="my-handle cursor-move px-4 py-3">
+						<Grip />
+					</td>
+					<td class="px-4 py-3">
+						<div
+							class="rounded-lg p-3 shadow-sm ring-1 transition-all duration-200 hover:shadow-md hover:ring-2"
 						>
-							{#each row.cells as cell (cell.id)}
-								<Subscribe attrs={cell.attrs()} let:attrs>
-									<!-- {#if cell.id === 'selected'}{/if} -->
-									<td class="relative border-1 p-2 text-left" {...attrs}>
-										{#if cell.id === 'selected' || cell.id === 'selected-end'}
-											<div class="drag-handle absolute inset-2 flex cursor-move items-center">
-												<Render of={cell.render()} />
-											</div>
-										{:else}
-											<Render of={cell.render()} />
-										{/if}
-									</td>
-								</Subscribe>
-							{/each}
-						</tr>
-					</Subscribe>
-				{/each}
-			</tbody>
-		</table>
-		<div class="flex items-center justify-end space-x-4 py-4">
-			<button
-				class="rounded border px-4 py-2 disabled:opacity-50"
-				onclick={() => ($pageIndex = $pageIndex - 1)}
-				disabled={!$hasPreviousPage}
-			>
-				წინა
-			</button>
-			<button
-				class="rounded border px-4 py-2 disabled:opacity-50"
-				disabled={!$hasNextPage}
-				onclick={() => ($pageIndex = $pageIndex + 1)}
-			>
-				შემდეგი
-			</button>
-		</div>
-	</div>
+							{faculties[parseInt(item)].code}
+						</div>
+					</td>
+					<td class="px-4 py-3">
+						<div
+							class="rounded-lg p-3 shadow-sm ring-1 transition-all duration-200 hover:shadow-md hover:ring-2"
+						>
+							{faculties[parseInt(item)].code}
+						</div>
+					</td>
+					<td class="px-4 py-3">
+						<div
+							class="rounded-lg p-3 shadow-sm ring-1 transition-all duration-200 hover:shadow-md hover:ring-2"
+						>
+							{faculties[parseInt(item)].code}
+						</div>
+					</td>
+					<td class="px-4 py-3">
+						<div
+							class="rounded-lg p-3 shadow-sm ring-1 transition-all duration-200 hover:shadow-md hover:ring-2"
+						>
+							{faculties[parseInt(item)].code}
+						</div>
+					</td>
+					<td class="px-4 py-3">
+						<div
+							class="rounded-lg p-3 shadow-sm ring-1 transition-all duration-200 hover:shadow-md hover:ring-2"
+						>
+							{faculties[parseInt(item)].code}
+						</div>
+					</td>
+					<td class="px-4 py-3">
+						<button
+							type="button"
+							onclick={() => ($savedList = $savedList.filter((i) => i !== item))}
+						>
+							<Trash color="red" />
+						</button>
+					</td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
 </div>
+
+<Dialog.Root>
+	<div class="flex items-center justify-center">
+		<Dialog.Trigger
+			class="btn-icon preset-filled inline-flex items-center justify-center rounded-full p-2  transition-colors  focus:ring-2 focus:ring-black focus:ring-offset-2 focus:outline-none"
+		>
+			<Plus class="h-5 w-5" />
+		</Dialog.Trigger>
+	</div>
+	<Dialog.Portal>
+		<Dialog.Overlay class="fixed inset-0 backdrop-blur-2xl transition-opacity dark:bg-black/50" />
+		<Dialog.Content
+			class="fixed top-1/2 left-1/2 max-h-[85vh] max-w-full -translate-x-1/2 -translate-y-1/2 flex-wrap overflow-y-auto rounded-lg  border border-gray-200 p-6 shadow-xl focus:outline-none"
+		>
+			<div class="mb-4 flex items-center justify-between">
+				<Dialog.Title class="text-lg font-medium ">Selected Universities</Dialog.Title>
+				<Dialog.Close class="rounded-full p-1 focus:outline-none">
+					<X class="h-4 w-4" />
+				</Dialog.Close>
+			</div>
+			<MyTable />
+		</Dialog.Content>
+	</Dialog.Portal>
+</Dialog.Root>
