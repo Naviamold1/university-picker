@@ -7,3 +7,15 @@
 @import '@skeletonlabs/skeleton/themes/cerberus';
 
 @source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@media (max-width: 640px) {
+    button {
+      touch-action: manipulation;
+    }
+    
+    th button {
+      padding: 0.25rem
+    }
+  }

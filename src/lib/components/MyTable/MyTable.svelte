@@ -128,76 +128,82 @@
 	const { hasNextPage, hasPreviousPage, pageIndex } = pluginStates.page;
 </script>
 
-<div class="z-[100] flex size-[59%] flex-col p-4">
-	<table
-		class="max-w-full border-collapse overflow-x-auto overflow-y-hidden rounded-lg shadow-md"
-		{...$tableAttrs}
-	>
-		<thead>
-			{#each $headerRows as headerRow (headerRow.id)}
-				<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
-					<tr {...rowAttrs}>
-						{#each headerRow.cells as cell (cell.id)}
-							<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
-								<th {...attrs} use:props.resize class="p-2">
-									<button
-										class="flex items-center"
-										data-umami-event={`sort-${cell.id} button`}
-										type="button"
-										onclick={props.sort.toggle}
+<div class="z-[100] flex w-full flex-col p-4">
+	<div class="mb-8 overflow-x-auto rounded-xl bg-white shadow-lg dark:bg-gray-800">
+		<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" {...$tableAttrs}>
+			<thead class="bg-gray-50 dark:bg-gray-700">
+				{#each $headerRows as headerRow (headerRow.id)}
+					<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
+						<tr {...rowAttrs}>
+							{#each headerRow.cells as cell (cell.id)}
+								<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()} let:props>
+									<th
+										{...attrs}
+										use:props.resize
+										class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
 									>
-										<Render of={cell.render()} />
-										<!-- {#if cell.id !== 'selected' || cell.id === 'selected-end'} -->
-										<ArrowUpDown size={16} class="ml-2" />
-										<!-- {/if} -->
-									</button>
-									{#if props.filter?.render}
-										<div>
-											<Render of={props.filter.render} />
+										<button
+											class="flex items-center focus:ring-2 focus:ring-offset-1 focus:outline-none dark:focus:ring-offset-gray-800"
+											data-umami-event={`sort-${cell.id} button`}
+											type="button"
+											onclick={props.sort.toggle}
+										>
+											<Render of={cell.render()} />
+											<ArrowUpDown size={16} class="ml-2 text-gray-400" />
+										</button>
+										{#if props.filter?.render}
+											<div class="mt-2">
+												<Render of={props.filter.render} />
+											</div>
+										{/if}
+									</th>
+								</Subscribe>
+							{/each}
+						</tr>
+					</Subscribe>
+				{/each}
+			</thead>
+			<tbody
+				class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800"
+				{...$tableBodyAttrs}
+			>
+				{#each $pageRows as row (row.id)}
+					<Subscribe rowAttrs={row.attrs()} let:rowAttrs rowProps={row.props()} let:rowProps>
+						<tr
+							in:fade={{ duration: 150 }}
+							out:fade={{ duration: 150 }}
+							class="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+							{...rowAttrs}
+							data-row={row.id}
+							class:selected={rowProps.select.selected}
+						>
+							{#each row.cells as cell (cell.id)}
+								<Subscribe attrs={cell.attrs()} let:attrs>
+									<td class="px-6 py-4" {...attrs}>
+										<div
+											class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
+										>
+											<Render of={cell.render()} />
 										</div>
-									{/if}
-								</th>
-							</Subscribe>
-						{/each}
-					</tr>
-				</Subscribe>
-			{/each}
-		</thead>
-		<tbody {...$tableBodyAttrs}>
-			{#each $pageRows as row (row.id)}
-				<Subscribe rowAttrs={row.attrs()} let:rowAttrs rowProps={row.props()} let:rowProps>
-					<tr
-						in:fade={{ duration: 150 }}
-						out:fade={{ duration: 150 }}
-						class="z-40 rounded-lg p-3 shadow-sm ring-1 ring-gray-200
-							transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-200"
-						{...rowAttrs}
-						data-row={row.id}
-						class:selected={rowProps.select.selected}
-					>
-						{#each row.cells as cell (cell.id)}
-							<Subscribe attrs={cell.attrs()} let:attrs>
-								<!-- {#if cell.id === 'selected'}{/if} -->
-								<td class="relative border-1 p-2 text-left" {...attrs}>
-									<Render of={cell.render()} />
-								</td>
-							</Subscribe>
-						{/each}
-					</tr>
-				</Subscribe>
-			{/each}
-		</tbody>
-	</table>
-	<div class="flex items-center justify-end space-x-4 py-4">
+									</td>
+								</Subscribe>
+							{/each}
+						</tr>
+					</Subscribe>
+				{/each}
+			</tbody>
+		</table>
+	</div>
+	<div class="mt-4 flex items-center justify-end space-x-4 py-2">
 		<button
-			class="rounded border px-4 py-2 disabled:opacity-50"
+			class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
 			onclick={() => ($pageIndex = $pageIndex - 1)}
 			disabled={!$hasPreviousPage}
 		>
 			წინა
 		</button>
 		<button
-			class="rounded border px-4 py-2 disabled:opacity-50"
+			class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
 			disabled={!$hasNextPage}
 			onclick={() => ($pageIndex = $pageIndex + 1)}
 		>
