@@ -7,6 +7,8 @@
 	import type { Readable, Writable } from 'svelte/store';
 	import { page } from '$app/state';
 	import { copy } from 'svelte-copy';
+	import { fade } from 'svelte/transition';
+	import { onMount } from 'svelte';
 
 	let sortable = $state<HTMLElement | null>(null);
 
@@ -20,87 +22,158 @@
 			$savedList = reorder($savedList, evt);
 		}
 	});
+
+	let isMobile = $state(false);
+
+	// Check if we're on mobile
+	onMount(() => {
+		const checkIfMobile = () => {
+			isMobile = window.innerWidth < 768;
+		};
+
+		checkIfMobile();
+		window.addEventListener('resize', checkIfMobile);
+
+		return () => {
+			window.removeEventListener('resize', checkIfMobile);
+		};
+	});
+
+	const columns = [
+		{ id: 'code', label: 'კოდი' },
+		{ id: 'university', label: 'უნივერსიტეტი' },
+		{ id: 'faculty', label: 'ფაკულტეტი' },
+		{ id: 'cost', label: 'ფასი' },
+		{ id: 'financed', label: 'ფინანსდება' }
+	];
 </script>
 
 <div class="container mx-auto px-4 py-8">
 	<!-- Table Section -->
 	<div class="mb-8 overflow-x-auto rounded-xl bg-white shadow-lg dark:bg-gray-800">
-		<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-			<thead class="bg-gray-50 dark:bg-gray-700">
-				<tr>
-					<th
-						class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
-					></th>
-					<th
-						class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
-						>კოდი</th
-					>
-					<th
-						class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
-						>უნივერსიტეტი</th
-					>
-					<th
-						class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
-						>ფაკულტეტი</th
-					>
-					<th
-						class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
-						>ფასი</th
-					>
-					<th
-						class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
-						>ფინანსდება</th
-					>
-					<th
-						class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
-					></th>
-				</tr>
-			</thead>
-			<tbody
-				class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800"
-				bind:this={sortable}
-			>
+		{#if !isMobile}
+			<!-- Desktop/Tablet View: Original Table -->
+			<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+				<thead class="bg-gray-50 dark:bg-gray-700">
+					<tr>
+						<th
+							class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
+						></th>
+						<th
+							class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
+							>კოდი</th
+						>
+						<th
+							class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
+							>უნივერსიტეტი</th
+						>
+						<th
+							class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
+							>ფაკულტეტი</th
+						>
+						<th
+							class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
+							>ფასი</th
+						>
+						<th
+							class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
+							>ფინანსდება</th
+						>
+						<th
+							class="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-300"
+						></th>
+					</tr>
+				</thead>
+				<tbody
+					class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800"
+					bind:this={sortable}
+				>
+					{#each $savedList as item}
+						<tr class="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700">
+							<td class="my-handle cursor-move px-4 py-4 text-gray-400">
+								<Grip class="h-5 w-5" />
+							</td>
+							<td class="px-4 py-4">
+								<div
+									class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
+								>
+									{faculties[parseInt(item)].code}
+								</div>
+							</td>
+							<td class="px-4 py-4">
+								<div
+									class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
+								>
+									{faculties[parseInt(item)].university}
+								</div>
+							</td>
+							<td class="px-4 py-4">
+								<div
+									class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
+								>
+									{faculties[parseInt(item)].faculty}
+								</div>
+							</td>
+							<td class="px-4 py-4">
+								<div
+									class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
+								>
+									{faculties[parseInt(item)].cost}
+								</div>
+							</td>
+							<td class="px-4 py-4">
+								<div
+									class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
+								>
+									{faculties[parseInt(item)].financed}
+								</div>
+							</td>
+							<td class="px-4 py-4">
+								<button
+									type="button"
+									title="წაშლა"
+									class="rounded-full p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-red-500 focus:outline-none dark:hover:bg-red-900/20"
+									onclick={() => ($savedList = $savedList.filter((i) => i !== item))}
+								>
+									<Trash class="h-5 w-5" />
+								</button>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		{:else}
+			<!-- Mobile View: Cards -->
+			<div class="grid gap-4 p-4" bind:this={sortable}>
 				{#each $savedList as item}
-					<tr class="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700">
-						<td class="my-handle cursor-move px-4 py-4 text-gray-400">
+					<div
+						in:fade={{ duration: 150 }}
+						out:fade={{ duration: 150 }}
+						class="relative rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200 dark:bg-gray-700 dark:ring-gray-600"
+					>
+						<!-- Grip handle for mobile -->
+						<div class="my-handle absolute top-2 right-2 cursor-move text-gray-400">
 							<Grip class="h-5 w-5" />
-						</td>
-						<td class="px-4 py-4">
-							<div
-								class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
-							>
-								{faculties[parseInt(item)].code}
-							</div>
-						</td>
-						<td class="px-4 py-4">
-							<div
-								class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
-							>
-								{faculties[parseInt(item)].university}
-							</div>
-						</td>
-						<td class="px-4 py-4">
-							<div
-								class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
-							>
-								{faculties[parseInt(item)].faculty}
-							</div>
-						</td>
-						<td class="px-4 py-4">
-							<div
-								class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
-							>
-								{faculties[parseInt(item)].cost}
-							</div>
-						</td>
-						<td class="px-4 py-4">
-							<div
-								class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:shadow-md hover:ring-2 hover:ring-blue-300 dark:bg-gray-700 dark:ring-gray-600 dark:hover:ring-blue-500"
-							>
-								{faculties[parseInt(item)].financed}
-							</div>
-						</td>
-						<td class="px-4 py-4">
+						</div>
+
+						<!-- Content -->
+						<div class="grid gap-3">
+							{#each columns as column}
+								<div class="flex flex-col border-b border-gray-100 pb-2 dark:border-gray-600">
+									<span class="text-sm font-medium text-gray-500 dark:text-gray-400">
+										{column.label}
+									</span>
+									<div
+										class="mt-1 rounded-md bg-white p-2 shadow-sm ring-1 ring-gray-200 dark:bg-gray-700 dark:ring-gray-600"
+									>
+										{(faculties[parseInt(item)] as any)[column.id]}
+									</div>
+								</div>
+							{/each}
+						</div>
+
+						<!-- Delete button -->
+						<div class="mt-4 flex justify-end">
 							<button
 								type="button"
 								title="წაშლა"
@@ -109,11 +182,11 @@
 							>
 								<Trash class="h-5 w-5" />
 							</button>
-						</td>
-					</tr>
+						</div>
+					</div>
 				{/each}
-			</tbody>
-		</table>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Add University Button and Dialog -->
