@@ -193,6 +193,7 @@
 	<Dialog.Root>
 		<div class="mb-8 flex items-center justify-center">
 			<Dialog.Trigger
+				data-umami-event="უნივერსიტეტის დამატება"
 				title="უნივერსიტეტის დამატება"
 				class="inline-flex items-center justify-center rounded-full bg-blue-600 p-3 text-white shadow-md transition-all hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:bg-blue-700 dark:hover:bg-blue-800"
 			>
@@ -205,11 +206,11 @@
 				class="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity dark:bg-black/60"
 			/>
 			<Dialog.Content
-				class="fixed top-1/2 left-1/2 max-h-[85vh] w-[90vw] max-w-full -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gray-200 bg-white p-6 shadow-2xl focus:outline-none dark:border-gray-700 dark:bg-slate-800 dark:text-white"
+				class="fixed inset-0 m-auto h-fit max-h-[85vh] w-[90vw] max-w-full overflow-y-auto rounded-xl border border-gray-200 bg-white p-6 shadow-2xl focus:outline-none dark:border-gray-700 dark:bg-slate-800 dark:text-white"
 			>
 				<div class="mb-6 flex items-center justify-between">
 					<Dialog.Title class="text-xl font-semibold text-gray-900 dark:text-white"
-						>Selected Universities</Dialog.Title
+						>აირჩიეთ უნივერსიტეტების</Dialog.Title
 					>
 					<Dialog.Close
 						class="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-gray-400 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-700"
