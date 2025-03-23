@@ -196,8 +196,8 @@
 				title="უნივერსიტეტის დამატება"
 				class="inline-flex items-center justify-center rounded-full bg-blue-600 p-3 text-white shadow-md transition-all hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:bg-blue-700 dark:hover:bg-blue-800"
 			>
-				<Plus class="h-6 w-6" />
-				<span class="ml-2 font-medium">დამატება</span>
+				<Plus class="h-6 w-6 text-amber-50" />
+				<span class="ml-2 font-medium text-amber-50">დამატება</span>
 			</Dialog.Trigger>
 		</div>
 		<Dialog.Portal>
@@ -225,10 +225,11 @@
 	<!-- Share Section -->
 	<div class="mx-auto w-full max-w-md rounded-xl bg-white p-6 shadow-lg dark:bg-gray-800">
 		<label for="clipboard" class="mb-2 block font-bold text-gray-700 dark:text-gray-300"
-			>Share</label
+			>გაზიარება</label
 		>
-		<div class="relative" id="clipboard">
+		<div class="relative">
 			<input
+				id="clipboard"
 				title="ლინკი გაზიარებისათვის"
 				placeholder="loading..."
 				type="text"
